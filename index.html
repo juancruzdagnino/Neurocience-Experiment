@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experimento de Memoria y Atención Dividida</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background-color: #f3f4f6; /* Gray 100 */
+            color: #1f2937; /* Gray 800 */
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+        
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease-in-out;
+        }
+        .screen.active {
+            display: flex;
+            opacity: 1;
+        }
+
+        .academic-card {
+            background-color: #ffffff;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+        }
+
+        /* Dynamic Custom Sliders */
+        input[type=range] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            background: transparent;
+            height: 24px;
+            border-radius: 12px;
+            outline: none;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 28px;
+            width: 28px;
+            border-radius: 50%;
+            background: #ffffff;
+            cursor: pointer;
+            border: 2px solid #d1d5db;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            border-radius: 12px;
+        }
+
+        /* Minigame overlays & Mesh */
+        .minigame-container {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            z-index: 20;
+        }
+        .minigame-content {
+            pointer-events: auto;
+        }
+
+        /* Oclusión parcial agresiva */
+        .mesh-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: 
+                linear-gradient(rgba(0, 0, 0, 0.5) 2px, transparent 2px),
+                linear-gradient(90deg, rgba(0, 0, 0, 0.5) 2px, transparent 2px);
+            background-size: 30px 30px;
+            z-index: 10;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .mesh-overlay.active {
+            opacity: 1;
+        }
+
+        /* Botón de Toques Invasivo */
+        .invasive-btn {
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.8), 0 10px 25px rgba(0,0,0,0.5);
+            animation: pulse-border 1s infinite;
+        }
+        @keyframes pulse-border {
+            0% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(79, 70, 229, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(79, 70, 229, 0); }
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center relative">
+
+    <!-- Pantalla 1: Setup -->
+    <div id="screen-setup" class="screen active flex-col items-center justify-center w-full max-w-md p-8 academic-card rounded-xl mx-4">
+        <h1 class="text-2xl font-bold mb-4 text-gray-800 text-center">Evaluación de Atención Visual</h1>
+        <p class="text-gray-600 mb-6 text-center text-sm">
+            Por favor, ingrese sus datos para comenzar la prueba.
+        </p>
+        <div class="w-full mb-6">
+            <label for="participant-name" class="block text-sm font-medium text-gray-700 mb-2">Nombre o ID del participante:</label>
+            <input type="text" id="participant-name" class="w-full bg-gray-50 border border-gray-300 rounded-lg p-3 text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Ej. Sujeto 01" autocomplete="off">
+        </div>
+        <button id="btn-setup" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors">
+            Continuar
+        </button>
+    </div>
+
+    <!-- Pantalla 2: Instrucciones -->
+    <div id="screen-instructions" class="screen flex-col items-center justify-center w-full max-w-2xl p-8 academic-card rounded-xl mx-4">
+        <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2 w-full text-center">Instrucciones</h2>
+        <div class="text-gray-600 space-y-4 mb-8 text-base">
+            <p>1. Verá un <strong>color sólido</strong> en la pantalla durante 5 segundos. Memorícelo con cuidado.</p>
+            <p>2. Al mismo tiempo, en algunos intentos aparecerá una <strong>tarea distractiva</strong> en el centro de la pantalla:</p>
+            <ul class="list-disc pl-8 space-y-2 text-sm bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <li><strong>Matemática:</strong> Aparecerá una operación (suma, resta o multiplicación). Seleccione el resultado correcto rápidamente.</li>
+                <li><strong>Toque:</strong> Aparecerá un botón parpadeante. Tóquelo repetidas veces mientras cambia de lugar.</li>
+            </ul>
+            <p>3. Después de los 5 segundos, usará controles deslizantes para <strong>recrear el color</strong> exacto que memorizó.</p>
+            <p class="text-sm font-semibold text-blue-700 bg-blue-50 p-3 rounded-lg text-center mt-4">
+                Realizaremos 1 intento de prueba, seguido de 6 intentos evaluativos.
+            </p>
+        </div>
+        <button id="btn-instructions" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors text-lg">
+            Iniciar Prueba
+        </button>
+    </div>
+
+    <!-- Pantalla 3: Estímulo -->
+    <div id="screen-stimulus" class="screen flex-col items-center justify-center w-full h-full">
+        
+        <!-- Contenedor Superior: Indicador y Barra de Tiempo -->
+        <div class="absolute top-8 w-full max-w-2xl px-8 flex flex-col items-center gap-3">
+            <h3 id="trial-indicator" class="text-lg font-medium text-gray-500 uppercase tracking-wider"></h3>
+            
+            <!-- Barra de tiempo que se achica de derecha a izquierda -->
+            <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner flex justify-start">
+                <div id="time-bar" class="h-full bg-blue-500 rounded-full w-full"></div>
+            </div>
+        </div>
+        
+        <!-- Contenedor del color objetivo -->
+        <div id="target-color-box" class="w-[85vw] h-[60vh] max-w-4xl max-h-[600px] rounded-2xl shadow-2xl relative overflow-hidden transition-colors duration-200 border-4 border-white mt-12">
+            
+            <!-- Malla de interferencia visual (Oclusión parcial) -->
+            <div id="mesh-overlay" class="mesh-overlay"></div>
+
+            <!-- Contenedor de Minijuegos -->
+            <div id="minigame-container" class="minigame-container">
+                
+                <!-- Minijuego 1: Matemática (Grande y centrado) -->
+                <div id="game-math" class="minigame-content hidden flex-col items-center justify-center bg-gray-900/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl border-2 border-gray-600 scale-110">
+                    <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">Interferencia Activa</p>
+                    <p id="math-question" class="text-5xl font-black text-white mb-8 tracking-wider">2 + 2 = ?</p>
+                    <div class="flex gap-6 w-full justify-center">
+                        <button id="math-ans-1" class="flex-1 px-8 py-4 bg-gray-700 hover:bg-blue-600 text-white font-bold rounded-xl text-3xl transition-colors border border-gray-500"></button>
+                        <button id="math-ans-2" class="flex-1 px-8 py-4 bg-gray-700 hover:bg-blue-600 text-white font-bold rounded-xl text-3xl transition-colors border border-gray-500"></button>
+                    </div>
+                </div>
+
+                <!-- Minijuego 2: Click -->
+                <button id="game-click" class="minigame-content hidden absolute w-32 h-32 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-full text-xl transition-transform active:scale-90 invasive-btn select-none cursor-pointer shadow-xl">
+                    TOCAR!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pantalla 4: Respuesta -->
+    <div id="screen-response" class="screen flex-col items-center justify-center w-full max-w-lg p-8 academic-card rounded-xl mx-4">
+        <h2 class="text-xl font-bold mb-6 text-gray-800 text-center">Ajuste los controles para recrear el color</h2>
+        
+        <!-- Preview del color elegido -->
+        <div id="preview-color-box" class="w-full h-32 rounded-xl shadow-inner border border-gray-300 mb-8 transition-colors duration-75"></div>
+        
+        <!-- Sliders Dinámicos -->
+        <div class="w-full space-y-6 mb-8">
+            <div>
+                <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
+                    <span>Componente Rojo</span> <span id="val-r" class="text-red-600">128</span>
+                </div>
+                <input type="range" id="slider-r" min="0" max="255" value="128">
+            </div>
+            <div>
+                <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
+                    <span>Componente Verde</span> <span id="val-g" class="text-green-600">128</span>
+                </div>
+                <input type="range" id="slider-g" min="0" max="255" value="128">
+            </div>
+            <div>
+                <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
+                    <span>Componente Azul</span> <span id="val-b" class="text-blue-600">128</span>
+                </div>
+                <input type="range" id="slider-b" min="0" max="255" value="128">
+            </div>
+        </div>
+
+        <button id="btn-response" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors text-lg">
+            Confirmar Selección
+        </button>
+    </div>
+
+    <!-- Pantalla 5: Final -->
+    <div id="screen-end" class="screen flex-col items-center justify-center w-full max-w-lg p-8 academic-card rounded-xl text-center mx-4">
+        <h2 class="text-2xl font-bold mb-2 text-gray-800">Evaluación Completada</h2>
+        <p class="text-gray-500 mb-6 text-sm">Resumen de Resultados</p>
+        
+        <div class="w-full grid grid-cols-2 gap-4 mb-4">
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Sin Desafío (Tuyo)</p>
+                <p id="res-no-distract" class="text-3xl font-black text-blue-600">--%</p>
+            </div>
+            <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <p class="text-xs text-gray-500 font-semibold uppercase tracking-wide mb-1">Con Desafío (Tuyo)</p>
+                <p id="res-distract" class="text-3xl font-black text-indigo-600">--%</p>
+            </div>
+        </div>
+
+        <!-- Resumen Grupal de la Clase -->
+        <div class="w-full bg-blue-50 border border-blue-200 p-4 rounded-lg mb-6 text-left">
+            <h3 class="text-sm font-bold text-blue-900 mb-2 uppercase tracking-wide text-center">Media General de la Clase</h3>
+            <div class="flex justify-around text-center">
+                <div>
+                    <p class="text-xs text-blue-700">Sin Desafío Global</p>
+                    <p id="global-no-distract" class="text-xl font-black text-blue-800">--%</p>
+                </div>
+                <div class="border-l border-blue-200"></div>
+                <div>
+                    <p class="text-xs text-blue-700">Con Desafío Global</p>
+                    <p id="global-distract" class="text-xl font-black text-blue-800">--%</p>
+                </div>
+            </div>
+            <p id="class-status" class="text-xs text-center text-blue-600 mt-2">Sincronizando con la nube...</p>
+        </div>
+
+        <button id="btn-download" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg transition-colors text-base flex items-center justify-center gap-2 shadow-md">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            Descargar Mi Archivo CSV
+        </button>
+    </div>
+
+    <script>
+        // --- CONFIGURACIÓN NPOINT (Cambiar esto por tu link de npoint.io) ---
+        const NPOINT_URL = "https://api.npoint.io/2e9f35f702b1ac7a03bc";
+
+        // --- Estado del Experimento ---
+        const STIMULUS_DURATION = 5000; 
+
+        let participantName = "";
+        let trials = [];
+        let currentTrialIndex = 0;
+        let results = [];
+        
+        let currentTargetColor = { r: 0, g: 0, b: 0 };
+        let minigameStatus = 'pending';
+        let clickGameCount = 0;
+        let requiredClicks = 3;
+        
+        let stimulusTimer = null;
+
+        // --- Referencias al DOM ---
+        const screens = {
+            setup: document.getElementById('screen-setup'),
+            instructions: document.getElementById('screen-instructions'),
+            stimulus: document.getElementById('screen-stimulus'),
+            response: document.getElementById('screen-response'),
+            end: document.getElementById('screen-end')
+        };
+
+        const inputs = {
+            name: document.getElementById('participant-name'),
+            r: document.getElementById('slider-r'),
+            g: document.getElementById('slider-g'),
+            b: document.getElementById('slider-b')
+        };
+
+        const labels = {
+            r: document.getElementById('val-r'),
+            g: document.getElementById('val-g'),
+            b: document.getElementById('val-b'),
+            trialIndicator: document.getElementById('trial-indicator')
+        };
+
+        const boxes = {
+            target: document.getElementById('target-color-box'),
+            preview: document.getElementById('preview-color-box')
+        };
+
+        const timeBar = document.getElementById('time-bar');
+        const meshOverlay = document.getElementById('mesh-overlay');
+        
+        const gameMath = document.getElementById('game-math');
+        const mathQ = document.getElementById('math-question');
+        const mathAns1 = document.getElementById('math-ans-1');
+        const mathAns2 = document.getElementById('math-ans-2');
+        const gameClick = document.getElementById('game-click');
+
+        function showScreen(screenName) {
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+            setTimeout(() => {
+                screens[screenName].classList.add('active');
+            }, 50);
+        }
+
+        function randomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+            return array;
+        }
+
+        function generateTrials() {
+            let trialList = [
+                { tipo: 'Prueba', distractor: 'Matematica', numero: 1 }
+            ];
+
+            let formalTrials = [
+                { tipo: 'Formal', distractor: 'Ninguno' },
+                { tipo: 'Formal', distractor: 'Ninguno' },
+                { tipo: 'Formal', distractor: 'Matematica' },
+                { tipo: 'Formal', distractor: 'Matematica' },
+                { tipo: 'Formal', distractor: 'Toque' },
+                { tipo: 'Formal', distractor: 'Toque' }
+            ];
+            
+            formalTrials = shuffleArray(formalTrials);
+            formalTrials.forEach((t, i) => t.numero = i + 1);
+
+            return trialList.concat(formalTrials);
+        }
+
+        function startTrial() {
+            if (currentTrialIndex >= trials.length) {
+                endExperiment();
+                return;
+            }
+
+            const trial = trials[currentTrialIndex];
+            labels.trialIndicator.textContent = `${trial.tipo} - Intento ${trial.numero}`;
+            
+            currentTargetColor = { r: randomInt(30, 225), g: randomInt(30, 225), b: randomInt(30, 225) };
+            boxes.target.style.backgroundColor = `rgb(${currentTargetColor.r}, ${currentTargetColor.g}, ${currentTargetColor.b})`;
+
+            timeBar.style.transition = 'none';
+            timeBar.style.width = '100%';
+            
+            meshOverlay.classList.remove('active');
+            gameMath.classList.add('hidden');
+            gameClick.classList.add('hidden');
+            minigameStatus = trial.distractor === 'Ninguno' ? 'N/A' : 'failed';
+
+            showScreen('stimulus');
+
+            setTimeout(() => {
+                timeBar.style.transition = `width ${STIMULUS_DURATION}ms linear`;
+                timeBar.style.width = '0%';
+            }, 50);
+
+            if (trial.distractor !== 'Ninguno') {
+                setTimeout(() => {
+                    meshOverlay.classList.add('active');
+                    setupMinigame(trial.distractor);
+                }, 800);
+            }
+
+            stimulusTimer = setTimeout(endStimulus, STIMULUS_DURATION);
+        }
+
+        function setupMinigame(type) {
+            if (type === 'Matematica') {
+                setupMathGame();
+            } else if (type === 'Toque') {
+                setupClickGame();
+            }
+        }
+
+        function setupMathGame() {
+            const ops = ['+', '-', 'x'];
+            const op = ops[randomInt(0, 2)];
+            let a, b, correct;
+
+            if (op === '+') {
+                a = randomInt(5, 25);
+                b = randomInt(5, 25);
+                correct = a + b;
+            } else if (op === '-') {
+                a = randomInt(15, 40);
+                b = randomInt(5, a - 1);
+                correct = a - b;
+            } else if (op === 'x') {
+                a = randomInt(3, 9);
+                b = randomInt(2, 9);
+                correct = a * b;
+            }
+            
+            let offset = randomInt(1, 4) * (Math.random() > 0.5 ? 1 : -1);
+            let incorrect = correct + offset;
+            if (incorrect <= 0) incorrect = correct + 2;
+
+            mathQ.textContent = `${a} ${op} ${b} = ?`;
+
+            if (Math.random() > 0.5) {
+                setupMathButton(mathAns1, correct, true);
+                setupMathButton(mathAns2, incorrect, false);
+            } else {
+                setupMathButton(mathAns1, incorrect, false);
+                setupMathButton(mathAns2, correct, true);
+            }
+
+            gameMath.classList.remove('hidden');
+            gameMath.classList.add('flex');
+        }
+
+        function setupMathButton(btn, value, isCorrect) {
+            btn.textContent = value;
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                if (isCorrect) {
+                    minigameStatus = 'passed';
+                }
+                gameMath.classList.add('hidden');
+                meshOverlay.classList.remove('active');
+            };
+        }
+
+        function setupClickGame() {
+            clickGameCount = 0;
+            requiredClicks = randomInt(3, 4);
+            gameClick.textContent = 'TOCAR!';
+            moveClickButton();
+            gameClick.classList.remove('hidden');
+            
+            gameClick.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                clickGameCount++;
+                if (clickGameCount >= requiredClicks) {
+                    minigameStatus = 'passed';
+                    gameClick.classList.add('hidden');
+                    meshOverlay.classList.remove('active');
+                } else {
+                    moveClickButton();
+                }
+            };
+        }
+
+        function moveClickButton() {
+            const top = randomInt(10, 75);
+            const left = randomInt(10, 75);
+            gameClick.style.top = `${top}%`;
+            gameClick.style.left = `${left}%`;
+        }
+
+        function endStimulus() {
+            inputs.r.value = 128;
+            inputs.g.value = 128;
+            inputs.b.value = 128;
+            updateDynamicSliders();
+            showScreen('response');
+        }
+
+        function updateDynamicSliders() {
+            const r = inputs.r.value;
+            const g = inputs.g.value;
+            const b = inputs.b.value;
+            
+            labels.r.textContent = r;
+            labels.g.textContent = g;
+            labels.b.textContent = b;
+            
+            boxes.preview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
+
+            inputs.r.style.background = `linear-gradient(to right, rgb(0, ${g}, ${b}), rgb(255, ${g}, ${b}))`;
+            inputs.g.style.background = `linear-gradient(to right, rgb(${r}, 0, ${b}), rgb(${r}, 255, ${b}))`;
+            inputs.b.style.background = `linear-gradient(to right, rgb(${r}, ${g}, 0), rgb(${r}, ${g}, 255))`;
+        }
+
+        inputs.r.addEventListener('input', updateDynamicSliders);
+        inputs.g.addEventListener('input', updateDynamicSliders);
+        inputs.b.addEventListener('input', updateDynamicSliders);
+
+        document.getElementById('btn-response').addEventListener('click', () => {
+            const trial = trials[currentTrialIndex];
+            const rSelec = parseInt(inputs.r.value);
+            const gSelec = parseInt(inputs.g.value);
+            const bSelec = parseInt(inputs.b.value);
+
+            const diffR = currentTargetColor.r - rSelec;
+            const diffG = currentTargetColor.g - gSelec;
+            const diffB = currentTargetColor.b - bSelec;
+            const distance = Math.sqrt(diffR*diffR + diffG*diffG + diffB*diffB);
+            
+            const maxDistance = Math.sqrt(255*255*3);
+            let accuracy = Math.max(0, (1 - (distance / maxDistance)) * 100);
+
+            let penalizado = (trial.distractor !== 'Ninguno' && minigameStatus === 'failed') ? 'Si' : 'No';
+
+            results.push({
+                Nombre: participantName,
+                Ensayo: trial.numero,
+                Tipo: trial.tipo,
+                Distractor: trial.distractor,
+                Minijuego_Completado: minigameStatus === 'passed' ? 'Si' : (minigameStatus === 'failed' ? 'No' : 'N/A'),
+                Penalizado: penalizado,
+                R_Obj: currentTargetColor.r,
+                G_Obj: currentTargetColor.g,
+                B_Obj: currentTargetColor.b,
+                R_Ele: rSelec,
+                G_Ele: gSelec,
+                B_Ele: bSelec,
+                Precision_Pct: accuracy.toFixed(2)
+            });
+
+            currentTrialIndex++;
+            startTrial();
+        });
+
+        document.getElementById('btn-setup').addEventListener('click', () => {
+            const nameVal = inputs.name.value.trim();
+            if (!nameVal) {
+                inputs.name.classList.add('border-red-500');
+                setTimeout(() => inputs.name.classList.remove('border-red-500'), 1000);
+                return;
+            }
+            participantName = nameVal;
+            showScreen('instructions');
+        });
+
+        document.getElementById('btn-instructions').addEventListener('click', () => {
+            trials = generateTrials();
+            currentTrialIndex = 0;
+            results = [];
+            startTrial();
+        });
+
+        async function endExperiment() {
+            const formalResults = results.filter(r => r.Tipo === 'Formal');
+            
+            const noDistract = formalResults.filter(r => r.Distractor === 'Ninguno');
+            const withDistract = formalResults.filter(r => r.Distractor !== 'Ninguno');
+
+            const avgNoDistract = noDistract.reduce((acc, curr) => acc + parseFloat(curr.Precision_Pct), 0) / (noDistract.length || 1);
+            const avgDistract = withDistract.reduce((acc, curr) => acc + parseFloat(curr.Precision_Pct), 0) / (withDistract.length || 1);
+
+            document.getElementById('res-no-distract').textContent = avgNoDistract.toFixed(1) + '%';
+            document.getElementById('res-distract').textContent = avgDistract.toFixed(1) + '%';
+
+            showScreen('end');
+
+            // Sincronizar con npoint.io
+            if (NPOINT_URL && NPOINT_URL.startsWith('http')) {
+                try {
+                    document.getElementById('class-status').textContent = 'Sincronizando con la clase...';
+                    
+                    // 1. Traer datos actuales de la nube
+                    const response = await fetch(NPOINT_URL);
+                    let classData = await response.json();
+                    if (!Array.isArray(classData)) classData = [];
+
+                    // 2. Agregar los resultados formales de este participante
+                    formalResults.forEach(res => classData.push(res));
+
+                    // 3. Volver a subir la base actualizada
+                    await fetch(NPOINT_URL, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(classData)
+                    });
+
+                    // 4. Calcular la media de todos los que jugaron en la clase
+                    const globalNo = classData.filter(r => r.Tipo === 'Formal' && r.Distractor === 'Ninguno');
+                    const globalYes = classData.filter(r => r.Tipo === 'Formal' && r.Distractor !== 'Ninguno');
+
+                    const meanNo = globalNo.reduce((acc, curr) => acc + parseFloat(curr.Precision_Pct), 0) / (globalNo.length || 1);
+                    const meanYes = globalYes.reduce((acc, curr) => acc + parseFloat(curr.Precision_Pct), 0) / (globalYes.length || 1);
+
+                    document.getElementById('global-no-distract').textContent = meanNo.toFixed(1) + '%';
+                    document.getElementById('global-distract').textContent = meanYes.toFixed(1) + '%';
+                    document.getElementById('class-status').textContent = `¡Sincronizado! (${classData.length} registros totales)`;
+
+                } catch (error) {
+                    console.error('Error al sincronizar con npoint:', error);
+                    document.getElementById('class-status').textContent = 'No se pudo conectar a la nube (verifique el link)';
+                }
+            } else {
+                document.getElementById('class-status').textContent = 'Modo local (Link de npoint no configurado)';
+            }
+        }
+
+        document.getElementById('btn-download').addEventListener('click', () => {
+            if (results.length === 0) return;
+            const headers = Object.keys(results[0]).join(',');
+            const rows = results.map(row => Object.values(row).map(value => `"${value}"`).join(','));
+            const csvContent = headers + '\n' + rows.join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `Resultados_Experimento_${participantName.replace(/\s+/g, '_')}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        });
+    </script>
+</body>
+</html>
