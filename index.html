@@ -564,7 +564,7 @@
             }
         }
 
-        // Lógica para mostrar/ocultar y renderizar el gráfico con Chart.js
+        // Lógica para mostrar/ocultar y renderizar el gráfico con solo 2 barras (Con y Sin Desafío)
         document.getElementById('btn-toggle-chart').addEventListener('click', async () => {
             const container = document.getElementById('chart-container');
             const isHidden = container.classList.contains('hidden');
@@ -573,7 +573,6 @@
                 container.classList.remove('hidden');
                 document.getElementById('btn-toggle-chart').textContent = '📊 Ocultar Gráfico Global';
 
-                // Si no tenemos los datos cacheados, los buscamos de Supabase
                 if (!cachedGlobalData && supabaseClient) {
                     try {
                         const { data, error } = await supabaseClient.from('resultados').select('distractor, precision_pct').eq('tipo', 'Formal');
@@ -583,26 +582,23 @@
                     }
                 }
 
-                // Procesar promedios separados por tipo de distractor
-                let meanNinguno = 0, meanMatematica = 0, meanToque = 0;
+                let meanNinguno = 0, meanConDesafio = 0;
                 if (cachedGlobalData && cachedGlobalData.length > 0) {
                     const noneArr = cachedGlobalData.filter(r => r.distractor === 'Ninguno');
-                    const mathArr = cachedGlobalData.filter(r => r.distractor === 'Matematica');
-                    const touchArr = cachedGlobalData.filter(r => r.distractor === 'Toque');
+                    const withArr = cachedGlobalData.filter(r => r.distractor !== 'Ninguno');
 
                     meanNinguno = noneArr.length ? noneArr.reduce((a, b) => a + b.precision_pct, 0) / noneArr.length : 0;
-                    meanMatematica = mathArr.length ? mathArr.reduce((a, b) => a + b.precision_pct, 0) / mathArr.length : 0;
-                    meanToque = touchArr.length ? touchArr.reduce((a, b) => a + b.precision_pct, 0) / touchArr.length : 0;
+                    meanConDesafio = withArr.length ? withArr.reduce((a, b) => a + b.precision_pct, 0) / withArr.length : 0;
                 }
 
-                renderClassChart(meanNinguno, meanMatematica, meanToque);
+                renderClassChart(meanNinguno, meanConDesafio);
             } else {
                 container.classList.add('hidden');
                 document.getElementById('btn-toggle-chart').textContent = '📊 Ver Gráfico Global de la Clase';
             }
         });
 
-        function renderClassChart(noneVal, mathVal, touchVal) {
+        function renderClassChart(noneVal, withVal) {
             const ctx = document.getElementById('classChart').getContext('2d');
             
             if (classChartInstance) {
@@ -612,22 +608,20 @@
             classChartInstance = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ['Sin Desafío', 'Matemática', 'Toque Rápido'],
+                    labels: ['Sin Desafío', 'Con Desafío'],
                     datasets: [{
-                        label: 'Precisión Promedio de la Clase (%)',
-                        data: [noneVal.toFixed(1), mathVal.toFixed(1), touchVal.toFixed(1)],
+                        label: 'Precisión Promedio Global (%)',
+                        data: [noneVal.toFixed(1), withVal.toFixed(1)],
                         backgroundColor: [
-                            'rgba(37, 99, 235, 0.7)',   // Azul
-                            'rgba(79, 70, 229, 0.7)',   // Índigo
-                            'rgba(147, 51, 234, 0.7)'   // Violeta
+                            'rgba(37, 99, 235, 0.75)',   // Azul
+                            'rgba(79, 70, 229, 0.75)'    // Índigo
                         ],
                         borderColor: [
                             'rgb(37, 99, 235)',
-                            'rgb(79, 70, 229)',
-                            'rgb(147, 51, 234)'
+                            'rgb(79, 70, 229)'
                         ],
                         borderWidth: 2,
-                        borderRadius: 6
+                        borderRadius: 8
                     }]
                 },
                 options: {
@@ -636,7 +630,7 @@
                         legend: { display: false },
                         title: {
                             display: true,
-                            text: 'Impacto de la Atención Dividida en la Memoria Visual'
+                            text: 'Rendimiento General de la Clase'
                         }
                     },
                     scales: {
