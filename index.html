@@ -30,6 +30,7 @@
         }
 
         input[type=range] {
+            appearance: none;
             -webkit-appearance: none;
             width: 100%;
             background: transparent;
@@ -229,13 +230,21 @@
     <!-- Librería de Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // --- CONFIGURACIÓN SUPABASE ---
-        // Tu URL exacta de proyecto:
+        // --- CONFIGURACIÓN SUPABASE CON PROTECCIÓN ANTI-CRASH ---
         const supabaseUrl = 'https://auhkvcaamxlozrjzmkib.supabase.co';
-        // Pegá tu clave larga entre las comillas simples abajo:
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1aGt2Y2FhbXhsb3pyanpta2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTE1MjgsImV4cCI6MjEwNTU4NzUyOH0.iASCRVExryc-Sck08E4iHlKkVkSM97WlZULzxJZU9A8';
         
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        let supabase = null;
+        try {
+            // Esto evita que el código explote si Opera GX bloquea la librería
+            if (window.supabase) {
+                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+            } else {
+                console.warn("Librería de Supabase bloqueada por el navegador.");
+            }
+        } catch (e) {
+            console.error("Error al inicializar Supabase:", e);
+        }
 
         // --- Estado del Experimento ---
         const STIMULUS_DURATION = 5000; 
@@ -502,6 +511,11 @@
             showScreen('end');
 
             try {
+                if (!supabase) {
+                    document.getElementById('class-status').textContent = 'Guardado localmente. (La conexión a Supabase fue bloqueada por el navegador).';
+                    return;
+                }
+
                 document.getElementById('class-status').textContent = 'Sincronizando con la base de datos...';
                 
                 const dataToInsert = formalResults.map(r => ({
