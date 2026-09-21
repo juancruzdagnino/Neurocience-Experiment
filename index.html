@@ -233,11 +233,10 @@
         const supabaseUrl = 'https://auhkvcaamxlozrjzmkib.supabase.co';
         const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1aGt2Y2FhbXhsb3pyanpta2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTE1MjgsImV4cCI6MjEwNTU4NzUyOH0.iASCRVExryc-Sck08E4iHlKkVkSM97WlZULzxJZU9A8';
         
-        let supabase = null;
+        let supabaseClient = null;
         try {
-            // Esto evita que el código explote si Opera GX bloquea la librería
             if (window.supabase) {
-                supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+                supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
             } else {
                 console.warn("Librería de Supabase bloqueada por el navegador.");
             }
@@ -510,7 +509,7 @@
             showScreen('end');
 
             try {
-                if (!supabase) {
+                if (!supabaseClient) {
                     document.getElementById('class-status').textContent = 'Guardado localmente. (La conexión a Supabase fue bloqueada por el navegador).';
                     return;
                 }
@@ -524,10 +523,10 @@
                     precision_pct: parseFloat(r.Precision_Pct)
                 }));
 
-                const { error: insertError } = await supabase.from('resultados').insert(dataToInsert);
+                const { error: insertError } = await supabaseClient.from('resultados').insert(dataToInsert);
                 if (insertError) throw insertError;
 
-                const { data: allData, error: fetchError } = await supabase.from('resultados').select('distractor, precision_pct').eq('tipo', 'Formal');
+                const { data: allData, error: fetchError } = await supabaseClient.from('resultados').select('distractor, precision_pct').eq('tipo', 'Formal');
                 if (fetchError) throw fetchError;
 
                 const globalNo = allData.filter(r => r.distractor === 'Ninguno');
