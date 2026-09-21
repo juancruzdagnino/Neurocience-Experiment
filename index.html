@@ -7,8 +7,8 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         body {
-            background-color: #f3f4f6; /* Gray 100 */
-            color: #1f2937; /* Gray 800 */
+            background-color: #f3f4f6;
+            color: #1f2937;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             overflow: hidden;
         }
@@ -29,10 +29,8 @@
             border: 1px solid #e5e7eb;
         }
 
-        /* Dynamic Custom Sliders */
         input[type=range] {
             -webkit-appearance: none;
-            appearance: none;
             width: 100%;
             background: transparent;
             height: 24px;
@@ -56,7 +54,6 @@
             border-radius: 12px;
         }
 
-        /* Minigame overlays & Mesh */
         .minigame-container {
             position: absolute;
             inset: 0;
@@ -70,7 +67,6 @@
             pointer-events: auto;
         }
 
-        /* Oclusión parcial agresiva */
         .mesh-overlay {
             position: absolute;
             inset: 0;
@@ -87,7 +83,6 @@
             opacity: 1;
         }
 
-        /* Botón de Toques Invasivo */
         .invasive-btn {
             box-shadow: 0 0 0 4px rgba(255,255,255,0.8), 0 10px 25px rgba(0,0,0,0.5);
             animation: pulse-border 1s infinite;
@@ -138,27 +133,16 @@
 
     <!-- Pantalla 3: Estímulo -->
     <div id="screen-stimulus" class="screen flex-col items-center justify-center w-full h-full">
-        
-        <!-- Contenedor Superior: Indicador y Barra de Tiempo -->
         <div class="absolute top-8 w-full max-w-2xl px-8 flex flex-col items-center gap-3">
             <h3 id="trial-indicator" class="text-lg font-medium text-gray-500 uppercase tracking-wider"></h3>
-            
-            <!-- Barra de tiempo que se achica de derecha a izquierda -->
             <div class="w-full h-4 bg-gray-200 rounded-full overflow-hidden shadow-inner flex justify-start">
                 <div id="time-bar" class="h-full bg-blue-500 rounded-full w-full"></div>
             </div>
         </div>
         
-        <!-- Contenedor del color objetivo -->
         <div id="target-color-box" class="w-[85vw] h-[60vh] max-w-4xl max-h-[600px] rounded-2xl shadow-2xl relative overflow-hidden transition-colors duration-200 border-4 border-white mt-12">
-            
-            <!-- Malla de interferencia visual (Oclusión parcial) -->
             <div id="mesh-overlay" class="mesh-overlay"></div>
-
-            <!-- Contenedor de Minijuegos -->
             <div id="minigame-container" class="minigame-container">
-                
-                <!-- Minijuego 1: Matemática (Grande y centrado) -->
                 <div id="game-math" class="minigame-content hidden flex-col items-center justify-center bg-gray-900/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl border-2 border-gray-600 scale-110">
                     <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">Interferencia Activa</p>
                     <p id="math-question" class="text-5xl font-black text-white mb-8 tracking-wider">2 + 2 = ?</p>
@@ -167,8 +151,6 @@
                         <button id="math-ans-2" class="flex-1 px-8 py-4 bg-gray-700 hover:bg-blue-600 text-white font-bold rounded-xl text-3xl transition-colors border border-gray-500"></button>
                     </div>
                 </div>
-
-                <!-- Minijuego 2: Click -->
                 <button id="game-click" class="minigame-content hidden absolute w-32 h-32 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-full text-xl transition-transform active:scale-90 invasive-btn select-none cursor-pointer shadow-xl">
                     TOCAR!
                 </button>
@@ -179,11 +161,7 @@
     <!-- Pantalla 4: Respuesta -->
     <div id="screen-response" class="screen flex-col items-center justify-center w-full max-w-lg p-8 academic-card rounded-xl mx-4">
         <h2 class="text-xl font-bold mb-6 text-gray-800 text-center">Ajuste los controles para recrear el color</h2>
-        
-        <!-- Preview del color elegido -->
         <div id="preview-color-box" class="w-full h-32 rounded-xl shadow-inner border border-gray-300 mb-8 transition-colors duration-75"></div>
-        
-        <!-- Sliders Dinámicos -->
         <div class="w-full space-y-6 mb-8">
             <div>
                 <div class="flex justify-between text-sm font-semibold text-gray-600 mb-2">
@@ -204,7 +182,6 @@
                 <input type="range" id="slider-b" min="0" max="255" value="128">
             </div>
         </div>
-
         <button id="btn-response" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors text-lg">
             Confirmar Selección
         </button>
@@ -249,26 +226,29 @@
         </button>
     </div>
 
+    <!-- Librería de Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // --- CONFIGURACIÓN NPOINT (Cambiar esto por tu link de npoint.io) ---
-        const NPOINT_URL = '[https://api.npoint.io/2e9f35f702b1ac7a03bc](https://api.npoint.io/2e9f35f702b1ac7a03bc)';
+        // --- CONFIGURACIÓN SUPABASE ---
+        // Tu URL exacta de proyecto:
+        const supabaseUrl = 'https://auhkvcaamxlozrjzmkib.supabase.co';
+        // Pegá tu clave larga entre las comillas simples abajo:
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImF1aGt2Y2FhbXhsb3pyanpta2liIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAwMTE1MjgsImV4cCI6MjEwNTU4NzUyOH0.iASCRVExryc-Sck08E4iHlKkVkSM97WlZULzxJZU9A8';
+        
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // --- Estado del Experimento ---
         const STIMULUS_DURATION = 5000; 
-
         let participantName = "";
         let trials = [];
         let currentTrialIndex = 0;
         let results = [];
-        
         let currentTargetColor = { r: 0, g: 0, b: 0 };
         let minigameStatus = 'pending';
         let clickGameCount = 0;
         let requiredClicks = 3;
-        
         let stimulusTimer = null;
 
-        // --- Referencias al DOM ---
         const screens = {
             setup: document.getElementById('screen-setup'),
             instructions: document.getElementById('screen-instructions'),
@@ -276,29 +256,24 @@
             response: document.getElementById('screen-response'),
             end: document.getElementById('screen-end')
         };
-
         const inputs = {
             name: document.getElementById('participant-name'),
             r: document.getElementById('slider-r'),
             g: document.getElementById('slider-g'),
             b: document.getElementById('slider-b')
         };
-
         const labels = {
             r: document.getElementById('val-r'),
             g: document.getElementById('val-g'),
             b: document.getElementById('val-b'),
             trialIndicator: document.getElementById('trial-indicator')
         };
-
         const boxes = {
             target: document.getElementById('target-color-box'),
             preview: document.getElementById('preview-color-box')
         };
-
         const timeBar = document.getElementById('time-bar');
         const meshOverlay = document.getElementById('mesh-overlay');
-        
         const gameMath = document.getElementById('game-math');
         const mathQ = document.getElementById('math-question');
         const mathAns1 = document.getElementById('math-ans-1');
@@ -307,9 +282,7 @@
 
         function showScreen(screenName) {
             Object.values(screens).forEach(s => s.classList.remove('active'));
-            setTimeout(() => {
-                screens[screenName].classList.add('active');
-            }, 50);
+            setTimeout(() => { screens[screenName].classList.add('active'); }, 50);
         }
 
         function randomInt(min, max) {
@@ -325,10 +298,7 @@
         }
 
         function generateTrials() {
-            let trialList = [
-                { tipo: 'Prueba', distractor: 'Matematica', numero: 1 }
-            ];
-
+            let trialList = [{ tipo: 'Prueba', distractor: 'Matematica', numero: 1 }];
             let formalTrials = [
                 { tipo: 'Formal', distractor: 'Ninguno' },
                 { tipo: 'Formal', distractor: 'Ninguno' },
@@ -337,10 +307,8 @@
                 { tipo: 'Formal', distractor: 'Toque' },
                 { tipo: 'Formal', distractor: 'Toque' }
             ];
-            
             formalTrials = shuffleArray(formalTrials);
             formalTrials.forEach((t, i) => t.numero = i + 1);
-
             return trialList.concat(formalTrials);
         }
 
@@ -349,71 +317,51 @@
                 endExperiment();
                 return;
             }
-
             const trial = trials[currentTrialIndex];
             labels.trialIndicator.textContent = `${trial.tipo} - Intento ${trial.numero}`;
-            
             currentTargetColor = { r: randomInt(30, 225), g: randomInt(30, 225), b: randomInt(30, 225) };
             boxes.target.style.backgroundColor = `rgb(${currentTargetColor.r}, ${currentTargetColor.g}, ${currentTargetColor.b})`;
-
+            
             timeBar.style.transition = 'none';
             timeBar.style.width = '100%';
-            
             meshOverlay.classList.remove('active');
             gameMath.classList.add('hidden');
             gameClick.classList.add('hidden');
             minigameStatus = trial.distractor === 'Ninguno' ? 'N/A' : 'failed';
 
             showScreen('stimulus');
-
             setTimeout(() => {
                 timeBar.style.transition = `width ${STIMULUS_DURATION}ms linear`;
                 timeBar.style.width = '0%';
             }, 50);
-
+            
             if (trial.distractor !== 'Ninguno') {
                 setTimeout(() => {
                     meshOverlay.classList.add('active');
                     setupMinigame(trial.distractor);
                 }, 800);
             }
-
             stimulusTimer = setTimeout(endStimulus, STIMULUS_DURATION);
         }
 
         function setupMinigame(type) {
-            if (type === 'Matematica') {
-                setupMathGame();
-            } else if (type === 'Toque') {
-                setupClickGame();
-            }
+            if (type === 'Matematica') setupMathGame();
+            else if (type === 'Toque') setupClickGame();
         }
 
         function setupMathGame() {
             const ops = ['+', '-', 'x'];
             const op = ops[randomInt(0, 2)];
             let a, b, correct;
-
-            if (op === '+') {
-                a = randomInt(5, 25);
-                b = randomInt(5, 25);
-                correct = a + b;
-            } else if (op === '-') {
-                a = randomInt(15, 40);
-                b = randomInt(5, a - 1);
-                correct = a - b;
-            } else if (op === 'x') {
-                a = randomInt(3, 9);
-                b = randomInt(2, 9);
-                correct = a * b;
-            }
+            if (op === '+') { a = randomInt(5, 25); b = randomInt(5, 25); correct = a + b; }
+            else if (op === '-') { a = randomInt(15, 40); b = randomInt(5, a - 1); correct = a - b; }
+            else if (op === 'x') { a = randomInt(3, 9); b = randomInt(2, 9); correct = a * b; }
             
             let offset = randomInt(1, 4) * (Math.random() > 0.5 ? 1 : -1);
             let incorrect = correct + offset;
             if (incorrect <= 0) incorrect = correct + 2;
 
             mathQ.textContent = `${a} ${op} ${b} = ?`;
-
             if (Math.random() > 0.5) {
                 setupMathButton(mathAns1, correct, true);
                 setupMathButton(mathAns2, incorrect, false);
@@ -421,7 +369,6 @@
                 setupMathButton(mathAns1, incorrect, false);
                 setupMathButton(mathAns2, correct, true);
             }
-
             gameMath.classList.remove('hidden');
             gameMath.classList.add('flex');
         }
@@ -430,9 +377,7 @@
             btn.textContent = value;
             btn.onclick = (e) => {
                 e.stopPropagation();
-                if (isCorrect) {
-                    minigameStatus = 'passed';
-                }
+                if (isCorrect) minigameStatus = 'passed';
                 gameMath.classList.add('hidden');
                 meshOverlay.classList.remove('active');
             };
@@ -478,13 +423,10 @@
             const r = inputs.r.value;
             const g = inputs.g.value;
             const b = inputs.b.value;
-            
             labels.r.textContent = r;
             labels.g.textContent = g;
             labels.b.textContent = b;
-            
             boxes.preview.style.backgroundColor = `rgb(${r}, ${g}, ${b})`;
-
             inputs.r.style.background = `linear-gradient(to right, rgb(0, ${g}, ${b}), rgb(255, ${g}, ${b}))`;
             inputs.g.style.background = `linear-gradient(to right, rgb(${r}, 0, ${b}), rgb(${r}, 255, ${b}))`;
             inputs.b.style.background = `linear-gradient(to right, rgb(${r}, ${g}, 0), rgb(${r}, ${g}, 255))`;
@@ -504,7 +446,6 @@
             const diffG = currentTargetColor.g - gSelec;
             const diffB = currentTargetColor.b - bSelec;
             const distance = Math.sqrt(diffR*diffR + diffG*diffG + diffB*diffB);
-            
             const maxDistance = Math.sqrt(255*255*3);
             let accuracy = Math.max(0, (1 - (distance / maxDistance)) * 100);
 
@@ -525,7 +466,6 @@
                 B_Ele: bSelec,
                 Precision_Pct: accuracy.toFixed(2)
             });
-
             currentTrialIndex++;
             startTrial();
         });
@@ -550,7 +490,6 @@
 
         async function endExperiment() {
             const formalResults = results.filter(r => r.Tipo === 'Formal');
-            
             const noDistract = formalResults.filter(r => r.Distractor === 'Ninguno');
             const withDistract = formalResults.filter(r => r.Distractor !== 'Ninguno');
 
@@ -562,43 +501,37 @@
 
             showScreen('end');
 
-            // Sincronizar con npoint.io
-            if (NPOINT_URL && NPOINT_URL.startsWith('http')) {
-                try {
-                    document.getElementById('class-status').textContent = 'Sincronizando con la clase...';
-                    
-                    // 1. Traer datos actuales de la nube
-                    const response = await fetch(NPOINT_URL);
-                    let classData = await response.json();
-                    if (!Array.isArray(classData)) classData = [];
+            try {
+                document.getElementById('class-status').textContent = 'Sincronizando con la base de datos...';
+                
+                const dataToInsert = formalResults.map(r => ({
+                    nombre: r.Nombre,
+                    tipo: r.Tipo,
+                    distractor: r.Distractor,
+                    precision_pct: parseFloat(r.Precision_Pct)
+                }));
 
-                    // 2. Agregar los resultados formales de este participante
-                    formalResults.forEach(res => classData.push(res));
+                const { error: insertError } = await supabase.from('resultados').insert(dataToInsert);
+                if (insertError) throw insertError;
 
-                    // 3. Volver a subir la base actualizada
-                    await fetch(NPOINT_URL, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify(classData)
-                    });
+                const { data: allData, error: fetchError } = await supabase.from('resultados').select('distractor, precision_pct').eq('tipo', 'Formal');
+                if (fetchError) throw fetchError;
 
-                    // 4. Calcular la media de todos los que jugaron en la clase
-                    const globalNo = classData.filter(r => r.Tipo === 'Formal' && r.Distractor === 'Ninguno');
-                    const globalYes = classData.filter(r => r.Tipo === 'Formal' && r.Distractor !== 'Ninguno');
+                const globalNo = allData.filter(r => r.distractor === 'Ninguno');
+                const globalYes = allData.filter(r => r.distractor !== 'Ninguno');
 
-                    const meanNo = globalNo.reduce((acc, curr) => acc + parseFloat(curr.Precision_Pct), 0) / (globalNo.length || 1);
-                    const meanYes = globalYes.reduce((acc, curr) => acc + parseFloat(curr.Precision_Pct), 0) / (globalYes.length || 1);
+                const meanNo = globalNo.reduce((acc, curr) => acc + curr.precision_pct, 0) / (globalNo.length || 1);
+                const meanYes = globalYes.reduce((acc, curr) => acc + curr.precision_pct, 0) / (globalYes.length || 1);
 
-                    document.getElementById('global-no-distract').textContent = meanNo.toFixed(1) + '%';
-                    document.getElementById('global-distract').textContent = meanYes.toFixed(1) + '%';
-                    document.getElementById('class-status').textContent = `¡Sincronizado! (${classData.length} registros totales)`;
+                document.getElementById('global-no-distract').textContent = meanNo.toFixed(1) + '%';
+                document.getElementById('global-distract').textContent = meanYes.toFixed(1) + '%';
+                
+                const cantParticipantes = allData.length / 6; 
+                document.getElementById('class-status').textContent = `¡Sincronizado! (${cantParticipantes} participantes totales)`;
 
-                } catch (error) {
-                    console.error('Error al sincronizar con npoint:', error);
-                    document.getElementById('class-status').textContent = 'No se pudo conectar a la nube (verifique el link)';
-                }
-            } else {
-                document.getElementById('class-status').textContent = 'Modo local (Link de npoint no configurado)';
+            } catch (error) {
+                console.error('Error con Supabase:', error);
+                document.getElementById('class-status').textContent = 'Error al conectar con la base de datos.';
             }
         }
 
@@ -607,7 +540,6 @@
             const headers = Object.keys(results[0]).join(',');
             const rows = results.map(row => Object.values(row).map(value => `"${value}"`).join(','));
             const csvContent = headers + '\n' + rows.join('\n');
-            
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement("a");
