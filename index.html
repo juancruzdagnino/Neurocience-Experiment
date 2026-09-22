@@ -118,12 +118,12 @@
         <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2 w-full text-center">Instrucciones</h2>
         <div class="text-gray-600 space-y-4 mb-8 text-base">
             <p>1. Verá un <strong>color sólido</strong> en la pantalla durante 5 segundos. Memorícelo con cuidado.</p>
-            <p>2. Al mismo tiempo, en algunos intentos aparecerá una <strong>tarea</strong> en el centro de la pantalla:</p>
+            <p>2. Al mismo tiempo, en algunos intentos aparecerá una <strong>tarea distractiva</strong> en el centro de la pantalla:</p>
             <ul class="list-disc pl-8 space-y-2 text-sm bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <li><strong>Matemática:</strong> Aparecerá una operación (suma, resta o multiplicación). Seleccione el resultado correcto rápidamente.</li>
-                <li><strong>Toque:</strong> Aparecerá un botón parpadeante. Tóquelo repetidas veces mientras cambia de lugar.</li>
+                <li><strong>Toque Rápido:</strong> Aparecerá un botón parpadeante. Deberá tocarlo varias veces seguidas mientras cambia de lugar rápidamente.</li>
             </ul>
             <p>3. Después de los 5 segundos, usará controles deslizantes para <strong>recrear el color</strong> exacto que memorizó.</p>
+            <p>4. Al finalizar cada intento, verá su porcentaje de precisión obtenido.</p>
             <p class="text-sm font-semibold text-blue-700 bg-blue-50 p-3 rounded-lg text-center mt-4">
                 Realizaremos 1 intento de prueba, seguido de 6 intentos evaluativos aleatorios.
             </p>
@@ -145,14 +145,6 @@
         <div id="target-color-box" class="w-[85vw] h-[60vh] max-w-4xl max-h-[600px] rounded-2xl shadow-2xl relative overflow-hidden transition-colors duration-200 border-4 border-white mt-12">
             <div id="mesh-overlay" class="mesh-overlay"></div>
             <div id="minigame-container" class="minigame-container">
-                <div id="game-math" class="minigame-content hidden flex-col items-center justify-center bg-gray-900/90 backdrop-blur-md p-8 rounded-2xl shadow-2xl border-2 border-gray-600 scale-110">
-                    <p class="text-xs text-gray-400 uppercase tracking-widest mb-1">Interferencia Activa</p>
-                    <p id="math-question" class="text-5xl font-black text-white mb-8 tracking-wider">2 + 2 = ?</p>
-                    <div class="flex gap-6 w-full justify-center">
-                        <button id="math-ans-1" class="flex-1 px-8 py-4 bg-gray-700 hover:bg-blue-600 text-white font-bold rounded-xl text-3xl transition-colors border border-gray-500"></button>
-                        <button id="math-ans-2" class="flex-1 px-8 py-4 bg-gray-700 hover:bg-blue-600 text-white font-bold rounded-xl text-3xl transition-colors border border-gray-500"></button>
-                    </div>
-                </div>
                 <button id="game-click" class="minigame-content hidden absolute w-32 h-32 flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-full text-xl transition-transform active:scale-90 invasive-btn select-none cursor-pointer shadow-xl">
                     TOCAR!
                 </button>
@@ -186,6 +178,18 @@
         </div>
         <button id="btn-response" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors text-lg">
             Confirmar Selección
+        </button>
+    </div>
+
+    <!-- Pantalla de Feedback por Trial -->
+    <div id="screen-feedback" class="screen flex-col items-center justify-center w-full max-w-md p-8 academic-card rounded-xl text-center mx-4">
+        <h2 class="text-xl font-bold mb-2 text-gray-800" id="feedback-title">Resultado del Intento</h2>
+        <p class="text-gray-500 mb-6 text-sm" id="feedback-subtitle">Precisión obtenida:</p>
+        <div class="bg-blue-50 border border-blue-200 p-6 rounded-2xl mb-8 w-full">
+            <p id="feedback-score" class="text-5xl font-black text-blue-600">--%</p>
+        </div>
+        <button id="btn-next-trial" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors text-base">
+            Siguiente Intento
         </button>
     </div>
 
@@ -265,15 +269,17 @@
         let currentTargetColor = { r: 0, g: 0, b: 0 };
         let minigameStatus = 'pending';
         let clickGameCount = 0;
-        let requiredClicks = 3;
+        let requiredClicks = 4; // Entre 4 y 5 clicks
         let stimulusTimer = null;
         let classChartInstance = null;
+        let lastComputedAccuracy = 0;
 
         const screens = {
             setup: document.getElementById('screen-setup'),
             instructions: document.getElementById('screen-instructions'),
             stimulus: document.getElementById('screen-stimulus'),
             response: document.getElementById('screen-response'),
+            feedback: document.getElementById('screen-feedback'),
             end: document.getElementById('screen-end')
         };
         const inputs = {
@@ -294,10 +300,6 @@
         };
         const timeBar = document.getElementById('time-bar');
         const meshOverlay = document.getElementById('mesh-overlay');
-        const gameMath = document.getElementById('game-math');
-        const mathQ = document.getElementById('math-question');
-        const mathAns1 = document.getElementById('math-ans-1');
-        const mathAns2 = document.getElementById('math-ans-2');
         const gameClick = document.getElementById('game-click');
 
         function showScreen(screenName) {
@@ -318,11 +320,10 @@
         }
 
         function generateTrials() {
-            let trialList = [{ tipo: 'Prueba', distractor: 'Matematica', numero: 1 }];
+            let trialList = [{ tipo: 'Prueba', distractor: 'Toque', numero: 1 }];
             
-            // 3 sin desafío y 3 con desafío distribuidos al azar (Matemática o Toque)
-            let formalOptions = ['Ninguno', 'Ninguno', 'Ninguno', 'Matematica', 'Toque', 'Matematica'];
-            // Para asegurar aleatoriedad total de cuál distractor toca en los 3 con desafío, barajamos las opciones
+            // 3 sin desafío y 3 con desafío (Toque) distribuidos al azar
+            let formalOptions = ['Ninguno', 'Ninguno', 'Ninguno', 'Toque', 'Toque', 'Toque'];
             formalOptions = shuffleArray(formalOptions);
 
             let formalTrials = formalOptions.map((distractor) => ({
@@ -347,7 +348,6 @@
             timeBar.style.transition = 'none';
             timeBar.style.width = '100%';
             meshOverlay.classList.remove('active');
-            gameMath.classList.add('hidden');
             gameClick.classList.add('hidden');
             minigameStatus = trial.distractor === 'Ninguno' ? 'N/A' : 'failed';
 
@@ -360,54 +360,15 @@
             if (trial.distractor !== 'Ninguno') {
                 setTimeout(() => {
                     meshOverlay.classList.add('active');
-                    setupMinigame(trial.distractor);
+                    setupClickGame();
                 }, 800);
             }
             stimulusTimer = setTimeout(endStimulus, STIMULUS_DURATION);
         }
 
-        function setupMinigame(type) {
-            if (type === 'Matematica') setupMathGame();
-            else if (type === 'Toque') setupClickGame();
-        }
-
-        function setupMathGame() {
-            const ops = ['+', '-', 'x'];
-            const op = ops[randomInt(0, 2)];
-            let a, b, correct;
-            if (op === '+') { a = randomInt(5, 25); b = randomInt(5, 25); correct = a + b; }
-            else if (op === '-') { a = randomInt(15, 40); b = randomInt(5, a - 1); correct = a - b; }
-            else if (op === 'x') { a = randomInt(3, 9); b = randomInt(2, 9); correct = a * b; }
-            
-            let offset = randomInt(1, 4) * (Math.random() > 0.5 ? 1 : -1);
-            let incorrect = correct + offset;
-            if (incorrect <= 0) incorrect = correct + 2;
-
-            mathQ.textContent = `${a} ${op} ${b} = ?`;
-            if (Math.random() > 0.5) {
-                setupMathButton(mathAns1, correct, true);
-                setupMathButton(mathAns2, incorrect, false);
-            } else {
-                setupMathButton(mathAns1, incorrect, false);
-                setupMathButton(mathAns2, correct, true);
-            }
-            gameMath.classList.remove('hidden');
-            gameMath.classList.add('flex');
-        }
-
-        function setupMathButton(btn, value, isCorrect) {
-            btn.textContent = value;
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                if (isCorrect) minigameStatus = 'passed';
-                gameMath.classList.add('hidden');
-                meshOverlay.classList.remove('active');
-            };
-        }
-
         function setupClickGame() {
             clickGameCount = 0;
-            requiredClicks = randomInt(3, 4);
+            requiredClicks = randomInt(4, 5); // Entre 4 y 5 clics requeridos
             gameClick.textContent = 'TOCAR!';
             moveClickButton();
             gameClick.classList.remove('hidden');
@@ -488,6 +449,15 @@
                 B_Ele: bSelec,
                 Precision_Pct: accuracy.toFixed(2)
             });
+
+            lastComputedAccuracy = accuracy.toFixed(1);
+            document.getElementById('feedback-title').textContent = `${trial.tipo} - Intento ${trial.numero}`;
+            document.getElementById('feedback-score').textContent = lastComputedAccuracy + '%';
+            
+            showScreen('feedback');
+        });
+
+        document.getElementById('btn-next-trial').addEventListener('click', () => {
             currentTrialIndex++;
             startTrial();
         });
