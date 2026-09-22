@@ -118,7 +118,7 @@
         <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2 w-full text-center">Instrucciones</h2>
         <div class="text-gray-600 space-y-4 mb-8 text-base">
             <p>1. Verá un <strong>color sólido</strong> en la pantalla durante 5 segundos. Memorícelo con cuidado.</p>
-            <p>2. Al mismo tiempo, en algunos intentos aparecerá una <strong>tarea</strong> en el centro de la pantalla:</p>
+            <p>2. Al mismo tiempo, en algunos intentos aparecerá una <strong>tarea distractiva</strong> en el centro de la pantalla:</p>
             <ul class="list-disc pl-8 space-y-2 text-sm bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <li><strong>Toque Rápido:</strong> Aparecerá un botón parpadeante. Deberá tocarlo varias veces seguidas mientras cambia de lugar rápidamente.</li>
             </ul>
@@ -269,7 +269,7 @@
         let currentTargetColor = { r: 0, g: 0, b: 0 };
         let minigameStatus = 'pending';
         let clickGameCount = 0;
-        let requiredClicks = 3; // Ajustado a 3 o 4 clics
+        let requiredClicks = 3; 
         let stimulusTimer = null;
         let classChartInstance = null;
         let lastComputedAccuracy = 0;
@@ -322,7 +322,6 @@
         function generateTrials() {
             let trialList = [{ tipo: 'Prueba', distractor: 'Toque', numero: 1 }];
             
-            // 3 sin desafío y 3 con desafío (Toque) distribuidos al azar
             let formalOptions = ['Ninguno', 'Ninguno', 'Ninguno', 'Toque', 'Toque', 'Toque'];
             formalOptions = shuffleArray(formalOptions);
 
@@ -368,7 +367,13 @@
 
         function setupClickGame() {
             clickGameCount = 0;
-            requiredClicks = randomInt(3, 4); // Entre 3 y 4 clics requeridos
+            
+            // Detección automática de dispositivo: 
+            // Si el ancho de pantalla es menor a 768px (celular/tablet), requiere 5 o 6 toques.
+            // Si es PC, requiere 3 o 4 toques.
+            const isMobile = window.innerWidth < 768;
+            requiredClicks = isMobile ? randomInt(5, 6) : randomInt(3, 4);
+
             gameClick.textContent = 'TOCAR!';
             moveClickButton();
             gameClick.classList.remove('hidden');
