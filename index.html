@@ -125,7 +125,7 @@
             </ul>
             <p>3. Después de los 5 segundos, usará controles deslizantes para <strong>recrear el color</strong> exacto que memorizó.</p>
             <p class="text-sm font-semibold text-blue-700 bg-blue-50 p-3 rounded-lg text-center mt-4">
-                Realizaremos 1 intento de prueba, seguido de 6 intentos evaluativos.
+                Realizaremos 1 intento de prueba, seguido de 6 intentos evaluativos aleatorios.
             </p>
         </div>
         <button id="btn-instructions" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-8 rounded-lg transition-colors text-lg">
@@ -319,15 +319,17 @@
 
         function generateTrials() {
             let trialList = [{ tipo: 'Prueba', distractor: 'Matematica', numero: 1 }];
-            let formalTrials = [
-                { tipo: 'Formal', distractor: 'Ninguno' },
-                { tipo: 'Formal', distractor: 'Ninguno' },
-                { tipo: 'Formal', distractor: 'Matematica' },
-                { tipo: 'Formal', distractor: 'Matematica' },
-                { tipo: 'Formal', distractor: 'Toque' },
-                { tipo: 'Formal', distractor: 'Toque' }
-            ];
-            formalTrials = shuffleArray(formalTrials);
+            
+            // 3 sin desafío y 3 con desafío distribuidos al azar (Matemática o Toque)
+            let formalOptions = ['Ninguno', 'Ninguno', 'Ninguno', 'Matematica', 'Toque', 'Matematica'];
+            // Para asegurar aleatoriedad total de cuál distractor toca en los 3 con desafío, barajamos las opciones
+            formalOptions = shuffleArray(formalOptions);
+
+            let formalTrials = formalOptions.map((distractor) => ({
+                tipo: 'Formal',
+                distractor: distractor
+            }));
+
             formalTrials.forEach((t, i) => t.numero = i + 1);
             return trialList.concat(formalTrials);
         }
@@ -564,7 +566,6 @@
             }
         }
 
-        // Lógica para mostrar/ocultar y renderizar el gráfico con solo 2 barras (Con y Sin Desafío)
         document.getElementById('btn-toggle-chart').addEventListener('click', async () => {
             const container = document.getElementById('chart-container');
             const isHidden = container.classList.contains('hidden');
@@ -613,8 +614,8 @@
                         label: 'Precisión Promedio Global (%)',
                         data: [noneVal.toFixed(1), withVal.toFixed(1)],
                         backgroundColor: [
-                            'rgba(37, 99, 235, 0.75)',   // Azul
-                            'rgba(79, 70, 229, 0.75)'    // Índigo
+                            'rgba(37, 99, 235, 0.75)',   
+                            'rgba(79, 70, 229, 0.75)'    
                         ],
                         borderColor: [
                             'rgb(37, 99, 235)',
