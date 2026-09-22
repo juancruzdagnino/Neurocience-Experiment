@@ -118,7 +118,7 @@
         <h2 class="text-2xl font-bold mb-4 text-gray-800 border-b pb-2 w-full text-center">Instrucciones</h2>
         <div class="text-gray-600 space-y-4 mb-8 text-base">
             <p>1. Verá un <strong>color sólido</strong> en la pantalla durante 5 segundos. Memorícelo con cuidado.</p>
-            <p>2. Al mismo tiempo, en algunos intentos aparecerá una <strong>tarea distractiva</strong> en el centro de la pantalla:</p>
+            <p>2. Al mismo tiempo, en algunos intentos aparecerá una <strong>tarea</strong> en el centro de la pantalla:</p>
             <ul class="list-disc pl-8 space-y-2 text-sm bg-gray-50 p-4 rounded-lg border border-gray-200">
                 <li><strong>Toque Rápido:</strong> Aparecerá un botón parpadeante. Deberá tocarlo varias veces seguidas mientras cambia de lugar rápidamente.</li>
             </ul>
@@ -269,7 +269,7 @@
         let currentTargetColor = { r: 0, g: 0, b: 0 };
         let minigameStatus = 'pending';
         let clickGameCount = 0;
-        let requiredClicks = 4; // Entre 4 y 5 clicks
+        let requiredClicks = 3; // Ajustado a 3 o 4 clics
         let stimulusTimer = null;
         let classChartInstance = null;
         let lastComputedAccuracy = 0;
@@ -368,7 +368,7 @@
 
         function setupClickGame() {
             clickGameCount = 0;
-            requiredClicks = randomInt(4, 5); // Entre 4 y 5 clics requeridos
+            requiredClicks = randomInt(3, 4); // Entre 3 y 4 clics requeridos
             gameClick.textContent = 'TOCAR!';
             moveClickButton();
             gameClick.classList.remove('hidden');
